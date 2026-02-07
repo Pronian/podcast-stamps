@@ -73,5 +73,9 @@
 		::-webkit-scrollbar-thumb:hover {
 			background: var(--color-text-muted);
 		}
+
+		::-webkit-scrollbar-corner {
+			background: var(--color-bg);
+		}
 	}
 </style>
