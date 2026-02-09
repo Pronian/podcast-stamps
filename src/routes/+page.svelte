@@ -4,6 +4,8 @@
 	let currentIndex = $state(0);
 	let isStreaming = $state(false);
 	let streamingText = $state('');
+	let streamingThinking = $state('');
+	let hasThinking = $state(false);
 	let errorMessage = $state('');
 
 	let canGenerate = $derived(transcript.trim().length > 0 && !isStreaming);
@@ -34,6 +36,8 @@
 
 		isStreaming = true;
 		streamingText = '';
+		streamingThinking = '';
+		hasThinking = false;
 		errorMessage = '';
 
 		// Run streaming in a detached async context so Svelte's async
@@ -57,11 +61,33 @@
 
 				const reader = response.body.getReader();
 				const decoder = new TextDecoder();
+				let buffer = '';
 
 				while (true) {
 					const { done, value } = await reader.read();
 					if (done) break;
-					streamingText += decoder.decode(value, { stream: true });
+
+					buffer += decoder.decode(value, { stream: true });
+
+					// Process complete lines (JSON objects separated by newlines)
+					const lines = buffer.split('\n');
+					buffer = lines.pop() ?? ''; // Keep incomplete line in buffer
+
+					for (const line of lines) {
+						if (!line.trim()) continue;
+						try {
+							const data = JSON.parse(line) as { type: string; content: string };
+							if (data.type === 'thinking') {
+								streamingThinking += data.content;
+								hasThinking = true;
+							} else if (data.type === 'content') {
+								streamingText += data.content;
+							}
+						} catch {
+							// Fallback: treat as plain text for backward compatibility
+							streamingText += line;
+						}
+					}
 				}
 
 				// push completed generation and navigate to it
@@ -72,6 +98,8 @@
 			} finally {
 				isStreaming = false;
 				streamingText = '';
+				streamingThinking = '';
+				hasThinking = false;
 			}
 		})();
 	}
@@ -149,7 +177,13 @@
 				{/if}
 			</div>
 			<div class="output-wrapper">
-				<textarea id="output" readonly value={displayText} placeholder="Timestamps will appear here..."></textarea>
+				{#if isStreaming}
+					<pre id="output" class="streaming-output"><code
+							>{#if hasThinking}<span class="thinking">{streamingThinking}</span>{/if}{streamingText}</code
+						></pre>
+				{:else}
+					<textarea id="output" readonly value={displayText} placeholder="Timestamps will appear here..."></textarea>
+				{/if}
 				<button
 					class="copy-btn"
 					onclick={copyOutput}
@@ -254,6 +288,36 @@
 		&[readonly] {
 			cursor: default;
 			background: var(--color-surface-raised);
+		}
+	}
+
+	/* Streaming output with thinking support */
+	.streaming-output {
+		width: 100%;
+		min-height: 12rem;
+		padding: var(--spacing-md);
+		background: var(--color-surface-raised);
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+		line-height: 1.7;
+		overflow: auto;
+		max-height: 60vh;
+		white-space: pre-wrap;
+		word-wrap: break-word;
+		margin: 0;
+
+		& code {
+			font-family: inherit;
+			background: transparent;
+			padding: 0;
+		}
+
+		& .thinking {
+			color: var(--color-text-muted);
+			opacity: 0.7;
 		}
 	}
 

@@ -34,9 +34,20 @@ export const POST: RequestHandler = async ({ request }) => {
 			async start(controller) {
 				try {
 					for await (const chunk of stream) {
-						const content = chunk.choices[0]?.delta?.content;
+						const delta = chunk.choices[0]?.delta;
+						if (!delta) continue;
+
+						const content = delta.content;
+						// Support reasoning_content from DeepSeek, Qwen, and other thinking models
+						const reasoning = (delta as Record<string, unknown>).reasoning_content as string | undefined;
+
+						if (reasoning) {
+							const data = JSON.stringify({ type: 'thinking', content: reasoning });
+							controller.enqueue(encoder.encode(data + '\n'));
+						}
 						if (content) {
-							controller.enqueue(encoder.encode(content));
+							const data = JSON.stringify({ type: 'content', content });
+							controller.enqueue(encoder.encode(data + '\n'));
 						}
 					}
 					controller.close();
