@@ -7,7 +7,8 @@ A raw text file containing timestamps (HH:MM:SS) and conversational speech. The 
 Create a clean, hierarchical list of chapters that summarizes the episode's content, grouping related topics under main headers where appropriate.
 
 **General Guidelines:**
-1.  **Timestamps:** Use the format `HH:MM:SS`. Always mark the timestamp where the topic *begins*.
+
+1.  **Timestamps:** Use the format `HH:MM:SS`. Always mark the timestamp where the topic _begins_.
 2.  **Ad Reads:** **CRITICAL:** Completely ignore all advertisement segments. Do not include them in the output.
 3.  **Tone:** Keep descriptions concise, neutral, and professional.
 
@@ -15,35 +16,41 @@ Create a clean, hierarchical list of chapters that summarizes the episode's cont
 You must identify the type of content being discussed and apply the specific formatting rules below:
 
 **1. The Intro (🙎‍♂️)**
-*   Identify the start of the show where the host discusses personal life, studio updates, or housekeeping.
-*   **Header Format:** `Timestamp 🙎‍♂️ Intro and personal live updates`
-*   **Sub-items:** Use indented lines with a hyphen (`-`) for specific personal stories (e.g., moving, tech issues, family stories).
+
+- Identify the start of the show where the host discusses personal life, studio updates, or housekeeping.
+- **Header Format:** `Timestamp 🙎‍♂️ Intro and personal live updates`
+- **Sub-items:** Use indented lines with a hyphen (`-`) for specific personal stories (e.g., moving, tech issues, family stories).
 
 **2. Standard Game Impressions (No Emoji)**
-*   Identify segments where the host discusses a specific game in depth.
-*   **Format:** `Timestamp [Game Title] [Discussed Topic]`
-*   **Note:** Do not use indentation or emojis for these standard segments.
+
+- Identify segments where the host discusses a specific game in depth.
+- **Format:** `Timestamp [Game Title] [Discussed Topic]`
+- **Note:** Do not use indentation or emojis for these standard segments.
 
 **3. Feature Segments (Contextual Emoji)**
-*   Identify if there is a **Major Feature or Event** (e.g., The Game Awards, E3 Recap, Arcade games and console discussions, or a specific deep dive topic).
-*   **Header:** Assign a context-appropriate emoji (e.g., 🗑️ for Arcade/Old games and console discussions, 🏆 for Awards, 🎟️ for Events, 📅 for Recaps).
-*   **Sub-items:** Use indented lines with a hyphen (`-`) for specific announcements, winners, or sub-points discussed within this feature.
-*   *Example 1:* If the host discusses "Arcade Games and Consoles," create a main header as "🗑️ Arcade Trash" and list the specific topics as sub-items.
-*   *Example 2:* If the host discusses "The Game Awards," create a main header with 🏆 and list the specific topics as sub-items.
+
+- Identify if there is a **Major Feature or Event** (e.g., The Game Awards, E3 Recap, Arcade games and console discussions, or a specific deep dive topic).
+- **Header:** Assign a context-appropriate emoji (e.g., 🗑️ for Arcade/Old games and console discussions, 🏆 for Awards, 🎟️ for Events, 📅 for Recaps).
+- **Sub-items:** Use indented lines with a hyphen (`-`) for specific announcements, winners, or sub-points discussed within this feature.
+- _Example 1:_ If the host discusses "Arcade Games and Consoles," create a main header as "🗑️ Arcade Trash" and list the specific topics as sub-items.
+- _Example 2:_ If the host discusses "The Game Awards," create a main header with 🏆 and list the specific topics as sub-items.
 
 **4. The News (📰)**
-*   Identify the transition to the general industry news segment.
-*   **Header:** `Timestamp 📰 The News`
-*   **Items:** List the specific news stories chronologically.
-*   **Format:** Do **not** indent these lines. Use the timestamp followed immediately by the headline.
+
+- Identify the transition to the general industry news segment.
+- **Header:** `Timestamp 📰 The News`
+- **Items:** List the specific news stories chronologically.
+- **Format:** Do **not** indent these lines. Use the timestamp followed immediately by the headline.
 
 **5. Emails (📫)**
-*   Identify the listener mail segment.
-*   **Header:** `Timestamp 📫Emails`
-*   **Items:** List every email read.
-*   **Format:** `Timestamp [Sender Name] - [Topic Summary]` (Do not indent).
+
+- Identify the listener mail segment.
+- **Header:** `Timestamp 📫Emails`
+- **Items:** List every email read.
+- **Format:** `Timestamp [Sender Name] - [Topic Summary]` (Do not indent).
 
 **Output Template Visualization:**
+
 ```text
 HH:MM:SS 🙎‍♂️ Intro and personal life updates
 HH:MM:SS - [Personal Story A]
