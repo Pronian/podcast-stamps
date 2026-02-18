@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { countTokens } from 'gpt-tokenizer';
+
 	let transcript = $state('');
+	let tokenCount = $state(0);
 	let generations: string[] = $state([]);
 	let currentIndex = $state(0);
 	let isStreaming = $state(false);
@@ -14,6 +17,67 @@
 	let canGoPrev = $derived(!isStreaming && currentIndex > 0);
 	let canGoNext = $derived(!isStreaming && currentIndex < generations.length - 1);
 	let copied = $state(false);
+	let canCompact = $derived(transcript.trim().length > 0 && !isStreaming);
+
+	let tokenDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	$effect(() => {
+		const text = transcript;
+		if (tokenDebounceTimer) clearTimeout(tokenDebounceTimer);
+		tokenDebounceTimer = setTimeout(() => {
+			tokenCount = text.trim() ? countTokens(text) : 0;
+		}, 3000);
+	});
+
+	const FILLER_WORDS = new Set(['um', 'uh', 'ah', 'oh', 'hmm', 'mm', 'hm', 'eh', 'er', 'mhm', 'uh-huh']);
+
+	function compactTranscript() {
+		if (!canCompact) return;
+
+		const lines = transcript.split(/\r?\n/);
+		const result: string[] = [];
+		let lastTimestampLineIdx = -1;
+
+		const timestampRegex = /^(\d{2}:\d{2}:\d{2})\s+(.+)$/;
+
+		for (const line of lines) {
+			const match = line.match(timestampRegex);
+
+			if (!match) {
+				result.push(line);
+				continue;
+			}
+
+			const [, , text] = match;
+			const trimmedText = text.trim();
+			const words = trimmedText.split(/\s+/);
+
+			if (!trimmedText) {
+				continue;
+			}
+
+			if (words.length === 1) {
+				const word = words[0];
+				const wordLower = word.toLowerCase().replace(/[.,!?;:'"…]+$/, '');
+
+				if (FILLER_WORDS.has(wordLower)) {
+					continue;
+				}
+
+				if (lastTimestampLineIdx >= 0) {
+					const prevMatch = result[lastTimestampLineIdx].match(timestampRegex);
+					if (prevMatch) {
+						result[lastTimestampLineIdx] = `${prevMatch[1]} ${prevMatch[2]} ${word}`;
+						continue;
+					}
+				}
+			}
+
+			result.push(line);
+			lastTimestampLineIdx = result.length - 1;
+		}
+
+		transcript = result.join('\n');
+	}
 
 	function handlePaste(event: ClipboardEvent) {
 		event.preventDefault();
@@ -143,9 +207,11 @@
 00:01:30 Let's get into our first topic..."
 			spellcheck="false"
 		></textarea>
+		<span class="token-count">~{tokenCount.toLocaleString()} tokens</span>
 	</section>
 
 	<div class="actions">
+		<button class="compact-btn" onclick={compactTranscript} disabled={!canCompact}> Compact Transcript </button>
 		<button class="generate-btn" onclick={generate} disabled={!canGenerate}>
 			{#if isStreaming}
 				<span class="spinner"></span>
@@ -260,6 +326,13 @@
 		}
 	}
 
+	.token-count {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+		font-family: var(--font-mono);
+		padding-inline-start: var(--spacing-xs);
+	}
+
 	textarea {
 		width: 100%;
 		min-height: 12rem;
@@ -325,6 +398,35 @@
 	.actions {
 		display: flex;
 		justify-content: center;
+		gap: var(--spacing-md);
+
+		& .compact-btn {
+			padding: var(--spacing-sm) var(--spacing-lg);
+			background: transparent;
+			color: var(--color-text);
+			border: 1px solid var(--color-border);
+			border-radius: var(--radius);
+			font-size: 0.9rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition:
+				background-color 0.15s,
+				border-color 0.15s;
+
+			&:hover:not(:disabled) {
+				border-color: var(--color-accent);
+				background: color-mix(in oklch, var(--color-accent), transparent 85%);
+			}
+
+			&:active:not(:disabled) {
+				background: color-mix(in oklch, var(--color-accent), transparent 70%);
+			}
+
+			&:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+		}
 
 		& .generate-btn {
 			display: inline-flex;

@@ -44,6 +44,9 @@ importers:
       globals:
         specifier: ^17.3.0
         version: 17.3.0
+      gpt-tokenizer:
+        specifier: ^3.4.0
+        version: 3.4.0
       openai:
         specifier: ^6.18.0
         version: 6.18.0(ws@8.19.0)
@@ -851,6 +854,9 @@ packages:
   globals@17.3.0:
     resolution: {integrity: sha512-yMqGUQVVCkD4tqjOJf3TnrvaaHDMYp4VlUSObbkIiuCPe/ofdMBFIAcBbCSRFWOnos6qRiTVStDwqPLUclaxIw==}
     engines: {node: '>=18'}
+
+  gpt-tokenizer@3.4.0:
+    resolution: {integrity: sha512-wxFLnhIXTDjYebd9A9pGl3e31ZpSypbpIJSOswbgop5jLte/AsZVDvjlbEuVFlsqZixVKqbcoNmRlFDf6pz/UQ==}
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -2002,6 +2008,8 @@ snapshots:
   globals@16.5.0: {}
 
   globals@17.3.0: {}
+
+  gpt-tokenizer@3.4.0: {}
 
   ignore@5.3.2: {}
 
