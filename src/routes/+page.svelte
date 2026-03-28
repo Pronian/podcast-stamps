@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { countTokens } from 'gpt-tokenizer';
+	import { compactTranscript as compactTranscriptUtil, cleanPastedTimestamps } from '$lib/utils/transcript';
 
 	let transcript = $state('');
 	let tokenCount = $state(0);
@@ -28,61 +29,15 @@
 		}, 3000);
 	});
 
-	const FILLER_WORDS = new Set(['um', 'uh', 'ah', 'oh', 'hmm', 'mm', 'hm', 'eh', 'er', 'mhm', 'uh-huh']);
-
 	function compactTranscript() {
 		if (!canCompact) return;
-
-		const lines = transcript.split(/\r?\n/);
-		const result: string[] = [];
-		let lastTimestampLineIdx = -1;
-
-		const timestampRegex = /^(\d{2}:\d{2}:\d{2})\s+(.+)$/;
-
-		for (const line of lines) {
-			const match = line.match(timestampRegex);
-
-			if (!match) {
-				result.push(line);
-				continue;
-			}
-
-			const [, , text] = match;
-			const trimmedText = text.trim();
-			const words = trimmedText.split(/\s+/);
-
-			if (!trimmedText) {
-				continue;
-			}
-
-			if (words.length === 1) {
-				const word = words[0];
-				const wordLower = word.toLowerCase().replace(/[.,!?;:'"…]+$/, '');
-
-				if (FILLER_WORDS.has(wordLower)) {
-					continue;
-				}
-
-				if (lastTimestampLineIdx >= 0) {
-					const prevMatch = result[lastTimestampLineIdx].match(timestampRegex);
-					if (prevMatch) {
-						result[lastTimestampLineIdx] = `${prevMatch[1]} ${prevMatch[2]} ${word}`;
-						continue;
-					}
-				}
-			}
-
-			result.push(line);
-			lastTimestampLineIdx = result.length - 1;
-		}
-
-		transcript = result.join('\n');
+		transcript = compactTranscriptUtil(transcript);
 	}
 
 	function handlePaste(event: ClipboardEvent) {
 		event.preventDefault();
 		const text = event.clipboardData?.getData('text') ?? '';
-		const cleaned = text.replace(/\[(\d{1,2}:\d{2}:\d{2})\]/g, '$1');
+		const cleaned = cleanPastedTimestamps(text);
 
 		const textarea = event.target as HTMLTextAreaElement;
 		const start = textarea.selectionStart;
