@@ -2,6 +2,7 @@ const FILLER_WORDS = new Set(['um', 'uh', 'ah', 'oh', 'hmm', 'mm', 'hm', 'eh', '
 
 const TIMESTAMP_REGEX = /^(\d{2}:\d{2}:\d{2})\s+(.+)$/;
 const BRACKET_TIMESTAMP_REGEX = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g;
+const MIN_LINE_LENGTH = 25;
 
 export function compactTranscript(transcript: string): string {
 	if (!transcript.trim()) return '';
@@ -18,32 +19,34 @@ export function compactTranscript(transcript: string): string {
 			continue;
 		}
 
-		const [, , text] = match;
+		const [, timestamp, text] = match;
 		const trimmedText = text.trim();
-		const words = trimmedText.split(/\s+/);
 
 		if (!trimmedText) {
 			continue;
 		}
 
-		if (words.length === 1) {
-			const word = words[0];
-			const wordLower = word.toLowerCase().replace(/[.,!?;:'"…]+$/, '');
+		const words = trimmedText.split(/\s+/);
+		const filteredWords = words.filter((word) => {
+			const clean = word.toLowerCase().replace(/[.,!?;:'"…]+$/, '');
+			return !FILLER_WORDS.has(clean);
+		});
 
-			if (FILLER_WORDS.has(wordLower)) {
+		const cleanedText = filteredWords.join(' ');
+
+		if (!cleanedText) {
+			continue;
+		}
+
+		if (cleanedText.length < MIN_LINE_LENGTH && lastTimestampLineIdx >= 0) {
+			const prevMatch = result[lastTimestampLineIdx].match(TIMESTAMP_REGEX);
+			if (prevMatch) {
+				result[lastTimestampLineIdx] = `${prevMatch[1]} ${prevMatch[2]} ${cleanedText}`;
 				continue;
-			}
-
-			if (lastTimestampLineIdx >= 0) {
-				const prevMatch = result[lastTimestampLineIdx].match(TIMESTAMP_REGEX);
-				if (prevMatch) {
-					result[lastTimestampLineIdx] = `${prevMatch[1]} ${prevMatch[2]} ${word}`;
-					continue;
-				}
 			}
 		}
 
-		result.push(line);
+		result.push(`${timestamp} ${cleanedText}`);
 		lastTimestampLineIdx = result.length - 1;
 	}
 
