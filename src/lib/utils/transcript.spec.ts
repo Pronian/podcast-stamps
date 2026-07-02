@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compactTranscript, cleanPastedTimestamps } from '$lib/utils/transcript';
+import { compactTranscript, cleanPastedTimestamps, formatSecondsAsTimestamp } from '$lib/utils/transcript';
 
 describe('compactTranscript', () => {
 	it('returns empty string for empty or whitespace-only input', () => {
@@ -151,5 +151,37 @@ describe('cleanPastedTimestamps', () => {
 	it('handles multiple bracket timestamps on the same line', () => {
 		const input = '[00:00:01] Hello [00:01:30] and [00:02:00] Goodbye';
 		expect(cleanPastedTimestamps(input)).toBe('00:00:01 Hello 00:01:30 and 00:02:00 Goodbye');
+	});
+});
+
+describe('formatSecondsAsTimestamp', () => {
+	it('formats zero', () => {
+		expect(formatSecondsAsTimestamp(0)).toBe('00:00:00');
+	});
+
+	it('floors fractional seconds', () => {
+		expect(formatSecondsAsTimestamp(1.99)).toBe('00:00:01');
+	});
+
+	it('formats minutes and seconds', () => {
+		expect(formatSecondsAsTimestamp(65)).toBe('00:01:05');
+	});
+
+	it('formats hours, minutes, and seconds', () => {
+		expect(formatSecondsAsTimestamp(3661)).toBe('01:01:01');
+	});
+
+	it('formats multi-hour values with zero-padded hours', () => {
+		expect(formatSecondsAsTimestamp(7384)).toBe('02:03:04');
+		expect(formatSecondsAsTimestamp(36000)).toBe('10:00:00');
+	});
+
+	it('clamps negative values to zero', () => {
+		expect(formatSecondsAsTimestamp(-5)).toBe('00:00:00');
+	});
+
+	it('clamps non-finite values to zero', () => {
+		expect(formatSecondsAsTimestamp(Number.NaN)).toBe('00:00:00');
+		expect(formatSecondsAsTimestamp(Number.POSITIVE_INFINITY)).toBe('00:00:00');
 	});
 });

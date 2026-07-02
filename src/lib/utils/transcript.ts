@@ -56,3 +56,17 @@ export function compactTranscript(transcript: string): string {
 export function cleanPastedTimestamps(text: string): string {
 	return text.replace(BRACKET_TIMESTAMP_REGEX, '$1');
 }
+
+/**
+ * Converts a number of seconds (e.g. from a caption segment start) into an
+ * `HH:MM:SS` timestamp string. Fractional seconds are floored so the timestamp
+ * marks where the segment begins.
+ */
+export function formatSecondsAsTimestamp(totalSeconds: number): string {
+	const clamped = Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : 0;
+	const total = Math.floor(clamped);
+	const hh = Math.floor(total / 3600);
+	const mm = Math.floor((total % 3600) / 60);
+	const ss = total % 60;
+	return [hh, mm, ss].map((n) => String(n).padStart(2, '0')).join(':');
+}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { countTokens } from 'gpt-tokenizer';
 	import { compactTranscript as compactTranscriptUtil, cleanPastedTimestamps } from '$lib/utils/transcript';
+	import { getTranscript } from '$lib/transcript.remote';
 
 	let transcript = $state('');
 	let tokenCount = $state(0);
@@ -12,6 +13,10 @@
 	let hasThinking = $state(false);
 	let errorMessage = $state('');
 
+	let youtubeUrl = $state('');
+	let isFetching = $state(false);
+	let fetchedTitle = $state('');
+
 	let canGenerate = $derived(transcript.trim().length > 0 && !isStreaming);
 	let hasGenerations = $derived(generations.length > 0);
 	let displayText = $derived(isStreaming ? streamingText : (generations[currentIndex] ?? ''));
@@ -19,6 +24,7 @@
 	let canGoNext = $derived(!isStreaming && currentIndex < generations.length - 1);
 	let copied = $state(false);
 	let canCompact = $derived(transcript.trim().length > 0 && !isStreaming);
+	let canFetch = $derived(youtubeUrl.trim().length > 0 && !isFetching);
 
 	let tokenDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 	$effect(() => {
@@ -32,6 +38,29 @@
 	function compactTranscript() {
 		if (!canCompact) return;
 		transcript = compactTranscriptUtil(transcript);
+	}
+
+	async function fetchTranscript() {
+		if (!canFetch) return;
+
+		isFetching = true;
+		errorMessage = '';
+
+		try {
+			const result = await getTranscript(youtubeUrl);
+			if (result.ok) {
+				transcript = result.transcript;
+				fetchedTitle = result.title;
+			} else {
+				fetchedTitle = '';
+				errorMessage = result.error;
+			}
+		} catch {
+			fetchedTitle = '';
+			errorMessage = 'Something went wrong while fetching the transcript.';
+		} finally {
+			isFetching = false;
+		}
 	}
 
 	function handlePaste(event: ClipboardEvent) {
@@ -151,6 +180,38 @@
 		<p class="subtitle">Generate timestamped show notes from YouTube transcripts</p>
 	</header>
 
+	<section class="youtube-section">
+		<label for="youtube-url">YouTube Link (optional)</label>
+		<div class="youtube-input-row">
+			<input
+				id="youtube-url"
+				type="text"
+				bind:value={youtubeUrl}
+				oninput={() => {
+					fetchedTitle = '';
+					errorMessage = '';
+				}}
+				onkeydown={(event) => {
+					if (event.key === 'Enter') fetchTranscript();
+				}}
+				placeholder="https://www.youtube.com/watch?v=..."
+				spellcheck="false"
+				autocomplete="off"
+			/>
+			<button class="fetch-btn" onclick={fetchTranscript} disabled={!canFetch}>
+				{#if isFetching}
+					<span class="spinner"></span>
+					Fetching...
+				{:else}
+					Fetch Transcript
+				{/if}
+			</button>
+		</div>
+		{#if fetchedTitle}
+			<p class="fetched-title">Loaded: {fetchedTitle}</p>
+		{/if}
+	</section>
+
 	<section class="input-section">
 		<label for="transcript">Paste Transcript</label>
 		<textarea
@@ -160,8 +221,7 @@
 			placeholder="00:00:00 Welcome to the show everybody...
 00:00:15 Today we're going to talk about...
 00:01:30 Let's get into our first topic..."
-			spellcheck="false"
-		></textarea>
+			spellcheck="false"></textarea>
 		<span class="token-count">~{tokenCount.toLocaleString()} tokens</span>
 	</section>
 
@@ -267,7 +327,8 @@
 	}
 
 	/* Input section */
-	.input-section {
+	.input-section,
+	.youtube-section {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-sm);
@@ -279,6 +340,76 @@
 			letter-spacing: 0.05em;
 			color: var(--color-text-muted);
 		}
+	}
+
+	.youtube-input-row {
+		display: flex;
+		gap: var(--spacing-sm);
+
+		& input {
+			flex: 1;
+			min-width: 0;
+			padding: var(--spacing-sm) var(--spacing-md);
+			background: var(--color-surface);
+			color: var(--color-text);
+			border: 1px solid var(--color-border);
+			border-radius: var(--radius);
+			font-family: var(--font-mono);
+			font-size: 0.85rem;
+			transition: border-color 0.2s;
+
+			&:focus {
+				outline: none;
+				border-color: var(--color-accent);
+			}
+
+			&::placeholder {
+				color: color-mix(in oklch, var(--color-text-muted), transparent 40%);
+			}
+		}
+
+		.fetch-btn {
+			display: inline-flex;
+			align-items: center;
+			gap: var(--spacing-sm);
+			white-space: nowrap;
+			padding: var(--spacing-sm) var(--spacing-lg);
+			background: transparent;
+			color: var(--color-text);
+			border: 1px solid var(--color-border);
+			border-radius: var(--radius);
+			font-size: 0.9rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition:
+				background-color 0.15s,
+				border-color 0.15s;
+
+			&:hover:not(:disabled) {
+				border-color: var(--color-accent);
+				background: color-mix(in oklch, var(--color-accent), transparent 85%);
+			}
+
+			&:active:not(:disabled) {
+				background: color-mix(in oklch, var(--color-accent), transparent 70%);
+			}
+
+			&:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+		}
+	}
+
+	.fetched-title {
+		margin: 0;
+		padding-inline-start: var(--spacing-xs);
+		font-size: 0.8rem;
+		color: var(--color-accent-dim);
+		font-family: var(--font-mono);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.token-count {
