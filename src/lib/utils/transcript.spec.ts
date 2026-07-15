@@ -116,6 +116,59 @@ describe('compactTranscript', () => {
 		expect(result).toContain('00:00:01 Hello World');
 		expect(result).not.toContain('00:00:02 um');
 	});
+
+	it('normalizes bracketed profanity censors to a bare __', () => {
+		expect(compactTranscript('00:00:01 this is [ __ ] up')).toBe('00:00:01 this is __ up');
+		expect(compactTranscript('00:00:01 piece of [__] video game')).toBe('00:00:01 piece of __ video game');
+		expect(compactTranscript('00:00:01 what the [ ___ ] man')).toBe('00:00:01 what the __ man');
+	});
+
+	it('collapses consecutive duplicate words to a single instance', () => {
+		expect(compactTranscript('00:00:01 the the Steam Machine')).toBe('00:00:01 the Steam Machine');
+		expect(compactTranscript('00:00:01 I I want to go')).toBe('00:00:01 I want to go');
+	});
+
+	it('collapses runs of three or more duplicate words', () => {
+		expect(compactTranscript('00:00:01 the the the the the end')).toBe('00:00:01 the end');
+		expect(compactTranscript('00:00:01 they they they shot a guy')).toBe('00:00:01 they shot a guy');
+	});
+
+	it('removes duplicates case-insensitively while keeping the first casing', () => {
+		expect(compactTranscript('00:00:01 The the Steam Machine')).toBe('00:00:01 The Steam Machine');
+	});
+
+	it('does not collapse duplicates separated by punctuation', () => {
+		expect(compactTranscript('00:00:01 the, the end')).toBe('00:00:01 the, the end');
+	});
+
+	it('uses word boundaries so substrings are not affected', () => {
+		expect(compactTranscript('00:00:01 there there is a problem')).toBe('00:00:01 there is a problem');
+		expect(compactTranscript('00:00:01 then then we left')).toBe('00:00:01 then we left');
+	});
+
+	it('removes conversational filler phrases', () => {
+		expect(compactTranscript('00:00:01 it was, you know, pretty good')).toBe('00:00:01 it was, pretty good');
+		expect(compactTranscript('00:00:01 it is kind of a big deal')).toBe('00:00:01 it is a big deal');
+		expect(compactTranscript('00:00:01 this is sort of weird or whatever')).toBe('00:00:01 this is weird');
+		expect(compactTranscript('00:00:01 I mean really I think so')).toBe('00:00:01 really I think so');
+	});
+
+	it('drops lines that become empty after filler-phrase removal', () => {
+		const input = ['00:00:01 Hello world enough text to stand alone', '00:00:02 you know,'].join('\n');
+		const result = compactTranscript(input);
+		expect(result.split('\n')).toHaveLength(1);
+		expect(result).not.toContain('you know');
+	});
+
+	it('deduplicates words that become adjacent after short-line merging', () => {
+		const input = [
+			'00:00:01 This is a long enough line to stand on its own right and',
+			'00:00:02 and then we left',
+		].join('\n');
+		const result = compactTranscript(input);
+		expect(result).not.toMatch(/and and/);
+		expect(result).toContain('and then we left');
+	});
 });
 
 describe('cleanPastedTimestamps', () => {

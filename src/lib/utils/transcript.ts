@@ -4,10 +4,16 @@ const TIMESTAMP_REGEX = /^(\d{2}:\d{2}:\d{2})\s+(.+)$/;
 const BRACKET_TIMESTAMP_REGEX = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g;
 const MIN_LINE_LENGTH = 25;
 
+const PROFANITY_REGEX = /\[\s*_+\s*\]/g;
+const DUPLICATE_WORD_REGEX = /\b(\w+)(?:\s+\1\b)+/gi;
+const FILLER_PHRASES_REGEX =
+	/\b(?:and all that sort of stuff|and what have you|and stuff|or whatever|sort of|kind of|you know|i mean)\b[,.]?/gi;
+
 export function compactTranscript(transcript: string): string {
 	if (!transcript.trim()) return '';
 
-	const lines = transcript.split(/\r?\n/);
+	const normalized = transcript.replace(PROFANITY_REGEX, '__');
+	const lines = normalized.split(/\r?\n/);
 	const result: string[] = [];
 	let lastTimestampLineIdx = -1;
 
@@ -20,13 +26,13 @@ export function compactTranscript(transcript: string): string {
 		}
 
 		const [, timestamp, text] = match;
-		const trimmedText = text.trim();
+		const withoutPhrases = removeFillerPhrases(text);
 
-		if (!trimmedText) {
+		if (!withoutPhrases) {
 			continue;
 		}
 
-		const words = trimmedText.split(/\s+/);
+		const words = withoutPhrases.split(/\s+/);
 		const filteredWords = words.filter((word) => {
 			const clean = word.toLowerCase().replace(/[.,!?;:'"…]+$/, '');
 			return !FILLER_WORDS.has(clean);
@@ -50,7 +56,26 @@ export function compactTranscript(transcript: string): string {
 		lastTimestampLineIdx = result.length - 1;
 	}
 
-	return result.join('\n');
+	return result.map(dedupeConsecutiveWords).join('\n');
+}
+
+/**
+ * Strips conversational filler phrases (you know, kind of, sort of, ...) and
+ * collapses the whitespace they leave behind.
+ */
+function removeFillerPhrases(text: string): string {
+	return text
+		.replace(FILLER_PHRASES_REGEX, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+}
+
+/**
+ * Collapses consecutive duplicate words to a single instance (e.g. "the the the"
+ * becomes "the"). The first occurrence's casing is preserved.
+ */
+function dedupeConsecutiveWords(line: string): string {
+	return line.replace(DUPLICATE_WORD_REGEX, '$1').replace(/\s{2,}/g, ' ');
 }
 
 export function cleanPastedTimestamps(text: string): string {
