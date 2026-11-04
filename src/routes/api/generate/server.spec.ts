@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockCreate = vi.fn();
+const mockOpenAI = vi.fn();
 
 vi.mock('openai', () => {
 	return {
-		default: vi.fn().mockImplementation(function () {
+		default: mockOpenAI.mockImplementation(function () {
 			return {
 				chat: {
 					completions: {
@@ -16,10 +17,11 @@ vi.mock('openai', () => {
 	};
 });
 
-vi.mock('$env/static/private', () => ({
+vi.mock('$app/env/private', () => ({
 	LLM_URL: 'http://localhost:11434',
 	LLM_MODEL_ID: 'test-model',
-	LLM_API_KEY: 'test-key',
+	// LLM_API_KEY is optional: simulate a local endpoint where it is unset
+	LLM_API_KEY: undefined,
 }));
 
 vi.mock('../../../prompt.md?raw', () => ({
@@ -122,6 +124,15 @@ describe('POST /api/generate', () => {
 		mockCreate.mockRejectedValue(new Error('API connection failed'));
 
 		await expect(callHandler({ transcript: 'test' })).rejects.toMatchObject({ status: 502 });
+	});
+
+	it('falls back to a placeholder API key when LLM_API_KEY is unset', async () => {
+		vi.resetModules();
+		await import('./+server');
+
+		expect(mockOpenAI).toHaveBeenCalledWith(
+			expect.objectContaining({ baseURL: 'http://localhost:11434', apiKey: expect.any(String) }),
+		);
 	});
 
 	it('skips chunks with no delta', async () => {

@@ -46,7 +46,7 @@ pnpm vitest --ui         # With UI
 - Use TypeScript for all new files
 - Prefer explicit types over implicit
 - Use `$types` imports for SvelteKit types: `import type { RequestHandler } from './$types'`
-- Path aliases: `$lib` for library code
+- Path aliases: `#lib` for library code
 
 ### Naming Conventions
 
@@ -87,7 +87,7 @@ pnpm vitest --ui         # With UI
 import { onMount } from 'svelte';
 import type { Snippet } from 'svelte';
 import { goto } from '$app/navigation';
-import { Button } from '$lib/components';
+import { Button } from '#lib/components';
 ```
 
 ## Testing

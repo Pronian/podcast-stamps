@@ -1,6 +1,6 @@
 import { getVideoDetails } from 'youtube-caption-extractor';
-import { parseYouTubeUrl } from '$lib/utils/youtube';
-import { formatSecondsAsTimestamp } from '$lib/utils/transcript';
+import { parseYouTubeUrl } from '#lib/utils/youtube.js';
+import { formatSecondsAsTimestamp } from '#lib/utils/transcript.js';
 
 export type TranscriptResult = { ok: true; transcript: string; title: string } | { ok: false; error: string };
 

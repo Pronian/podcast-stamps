@@ -1,11 +1,13 @@
-import { LLM_URL, LLM_MODEL_ID, LLM_API_KEY } from '$env/static/private';
+import { LLM_URL, LLM_MODEL_ID, LLM_API_KEY } from '$app/env/private';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import OpenAI from 'openai';
 import systemPrompt from '../../../prompt.md?raw';
 
+// The OpenAI SDK insists on an API key even when the server doesn't check one,
+// so use a placeholder when LLM_API_KEY is unset (local endpoints)
 const openai = new OpenAI({
-	apiKey: LLM_API_KEY,
+	apiKey: LLM_API_KEY ?? 'not-needed',
 	baseURL: LLM_URL,
 });
 

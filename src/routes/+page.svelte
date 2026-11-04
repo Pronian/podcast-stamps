@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { countTokens } from 'gpt-tokenizer';
-	import { compactTranscript as compactTranscriptUtil, cleanPastedTimestamps } from '$lib/utils/transcript';
-	import { getTranscript } from '$lib/transcript.remote';
+	import { compactTranscript as compactTranscriptUtil, cleanPastedTimestamps } from '#lib/utils/transcript.js';
+	import { getTranscript } from '#lib/transcript.remote.js';
 
 	let transcript = $state('');
 	let tokenCount = $state(0);

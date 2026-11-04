@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compactTranscript, cleanPastedTimestamps, formatSecondsAsTimestamp } from '$lib/utils/transcript';
+import { compactTranscript, cleanPastedTimestamps, formatSecondsAsTimestamp } from '#lib/utils/transcript.js';
 
 describe('compactTranscript', () => {
 	it('returns empty string for empty or whitespace-only input', () => {
