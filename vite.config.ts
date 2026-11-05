@@ -18,7 +18,7 @@ export default defineConfig({
 		expect: { requireAssertions: true },
 		projects: [
 			{
-				extends: './vite.config.ts',
+				// inline projects inherit the root config by default in Vitest 5
 				test: {
 					name: 'client',
 					browser: {
@@ -32,7 +32,6 @@ export default defineConfig({
 			},
 
 			{
-				extends: './vite.config.ts',
 				test: {
 					name: 'server',
 					environment: 'node',
